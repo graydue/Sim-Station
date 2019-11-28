@@ -48,8 +48,14 @@ public class Utilities {
 	}
 
 	public static void saveChanges(Model model) {
-		if (model.hasUnsavedChanges() && Utilities.confirm("current model has unsaved changes, continue?"))
+		if(model == null) {
+			model.setUnsavedChanges(false);
+		}
+		if (model.hasUnsavedChanges() && Utilities.confirm("Current model has unsaved changes. Do you want to save them?")) {
 			Utilities.save(model, false);
+			model.setUnsavedChanges(true);
+		}
+		model.setUnsavedChanges(false);
 	}
 
 	public static void save(Model model, Boolean saveAs) {
@@ -79,19 +85,28 @@ public class Utilities {
 	}
 
 	public static Model open(Model model) {
-		saveChanges(model);
-		String fName = model.getFileName();
-		JFileChooser chooser = new JFileChooser();
-		if (fName != null) {
-			chooser.setCurrentDirectory(new File(fName));
+//		saveChanges(model);
+//		String fName = model.getFileName();
+//		JFileChooser chooser = new JFileChooser();
+//		if (fName != null) {
+//			chooser.setCurrentDirectory(new File(fName));
+//		}
+//		int returnVal = chooser.showOpenDialog(null);
+//		if(returnVal == JFileChooser.APPROVE_OPTION) {
+//			fName = chooser.getSelectedFile().getPath();
+//		}
+		if(model.hasUnsavedChanges()) {
+			if(model.hasUnsavedChanges()== true) {
+				return null;
+			}
 		}
-		int returnVal = chooser.showOpenDialog(null);
-		if(returnVal == JFileChooser.APPROVE_OPTION) {
-			fName = chooser.getSelectedFile().getPath();
+		String name = Utilities.getFileName(model.getFileName(), "Open");
+		if(name == null) {
+			return null;
 		}
 		Model newModel = null;
 		try {
-			ObjectInputStream is = new ObjectInputStream(new FileInputStream(fName));
+			ObjectInputStream is = new ObjectInputStream(new FileInputStream(name));
 			newModel = (Model)is.readObject();
 			is.close();
 		} catch (Exception err) {
@@ -99,6 +114,23 @@ public class Utilities {
 		}
 		return newModel;
 		//return model;
+	}
+
+	private static String getFileName(String fName, String action) {
+		 JFileChooser chooser = new JFileChooser();
+	        String result = null;
+	        if (fName != null) {
+	            // open chooser in directory of fName
+	            chooser.setCurrentDirectory(new File(fName));
+	        }
+	        int returnVal = chooser.showDialog(null, action);
+	        if (returnVal == JFileChooser.APPROVE_OPTION) {
+	            result = chooser.getSelectedFile().getPath();
+	        } else if (returnVal == JFileChooser.CANCEL_OPTION)
+	        {
+	        	//Do nothing
+	        }
+	        return result;
 	}
 
 	public static JMenu makeMenu(String name, String[] items, ActionListener handler) {

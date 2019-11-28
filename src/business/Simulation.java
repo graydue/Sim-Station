@@ -5,44 +5,62 @@ import framework.Model;
 
 public abstract class Simulation extends Model implements Runnable{
 	protected String name;
-	protected Long clock = 0L;
+	protected long clock = 0L;
 	protected SimState state = SimState.READY;
 	private Thread thread;
-	
+
 	public Simulation() {
-		
+
 	}
-	
+
 	public void run() {
-		try {
-			thread.sleep(100);
-			synchronized(this) {
-				while(state == SimState.SUSPENDED) {
-					wait();
+		synchronized(thread) {
+			while(state == SimState.SUSPENDED) {
+				try {
+					thread.wait();
+				}
+				catch(InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		}
-		
+		while(state == SimState.RUNNING) {
+			update();
+			changed();
+			clock++;
+		}
 	}
-	
+
 	public void start() {
-		state = SimState.READY;
+		if(state == SimState.READY) {
+			thread = new Thread(this);
+			state = SimState.RUNNING;
+			thread.start();
+		}
 	}
-	
+
 	public void stop() {
 		state = SimState.STOPPED;
 	}
-	
+
 	public void suspend() {
-		state = SimState.SUSPENDED;
+		if(state != SimState.STOPPED) {
+			state = SimState.SUSPENDED;
+		}
 	}
-	
+
 	public void resume() {
-		state = SimState.READY;
-		this.notify();
+		synchronized(thread) {
+			if(state != SimState.RUNNING && state != SimState.STOPPED) {
+				state = SimState.READY;
+				thread.notify();
+			}
+		}
 	}
-	
+
 	public abstract void update();
+
+	public long getClockTime() {
+		return clock;
+	}
 }
