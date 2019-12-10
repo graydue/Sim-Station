@@ -54,6 +54,7 @@ public abstract class Simulation extends Model implements Runnable{
 			if(state != SimState.RUNNING && state != SimState.STOPPED) {
 				state = SimState.READY;
 				thread.notify();
+				start();
 			}
 		}
 	}
