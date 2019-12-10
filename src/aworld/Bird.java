@@ -29,7 +29,6 @@ public class Bird extends World{
 			a.heading = neighbor.heading;
 			a.speed = neighbor.speed;
 			a.move();
-			System.out.println(a.xc + " " + a.yc);
 		}
 	}
 }
